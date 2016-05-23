@@ -1,0 +1,147 @@
+1.Cobol 商业数据处理
+Fortran 数学运算
+Basic 易学易用
+Ada 美国国防部项目
+C 有汇编的强大功能以及高级语言的易学性呵可移植性
+VB Delphi  GUI
+C++ 适合开发系统软件 如OS和编译器
+C# 开发基于.NET平台的应用
+Java 开发独立于平台的互联网应用
+
+2 java源文件经过编译生成与体系结构无关的字节码，被JVM解释执行（解释就是翻译一句执行一句）。
+JVM先把类加载进来，在执行之前会检验字节码的合法性，以保证计算机的安全。
+Import只是告诉编译器应该去哪里找这个类，import本身并不会导入货加载这个类的，所以就算import很多对于性能来说是一点区别都没有的。
+
+3 赋初值的时候，如果数值溢出是会编译报错的，但是如果是计算结果溢出的话，就不会报错了，而且也不会自动升级，所以要小心！
+Java中超过不超过byte范围的立即数可以直接赋给byte变量，char，short类似，但是超过int范围的酒一定要在后面加上L，因为默认是当作int的。
+4 i=0; i=i++; 结果i是0！这是编译器的实现方法决定的，TC结果是0，VC结果是1
+原来浮点数也可以自增的，C语言也是可以的！
+Java中String的 + 运算，只要其中一个运算数是String，就会把另外一个转换成String，而不是跟C＋＋那样，因为是运算符重载，所以＋左边必须是字符串。
+
+5 Scanner，调用next(),nextInt()这些之后慎用nextLine()：
+next()这些的工作原理是先忽略连续的分隔符，然后读一个以分隔符结尾的token，但是并不会消耗结尾的那个token；而nextLine()则是直接开始读，并消耗最后那个换行符。所以如果先next()然后nextLine()，并输入12 12的话，nextLine会包括那个空格，而如果是12\n12的话，则nextLine只读进去了空的一行。
+
+6 javadoc
+java中有一种特别的注释，/**这是注释*/，放在一个类或一个方法的上面描述它，用export导出javadoc，就会生成html格式的程序文档，十分高级。
+
+7 异或运算  ^
+逻辑异或和算术异或都是这个！
+乱入，C语言中居然没有bool类型的变量！C++里面才有。
+
+8 switch只能是可以隐式转换成int的类型，char、short、byte。String也可以
+
+9 可以利用重定向来读入input、输出output：
+java ClassName < input.txt
+java ClassName < input.txt > output.txt
+
+10 关于浮点数的精度问题
+虽然说for语句的计数器用浮点数也是没问题的，但是由于累计误差，很可能实际循环的次数跟想象中的会有出入，所以还是用int吧。
+然后累加浮点数时，先加小的数，再加大的数，有助于减小误差。
+
+11 break label
+标签label 是标识代码块的标签。当这种形式的break执行时，控制被传递出指定的代码块。被加标签的代码块必须包围break 语句（意思就是跳出这个代码块，如果是循环的话就跳出循环，经常用来跳出多重循环）
+continue也有类似的用法，就是忽略这个循环剩下的内容直接开始下一次循环。
+
+12 看样子好像包裹类自动打包解包是什么时候都ok的
+
+13 Math类
+Math.sin(Math.toRadians(270))  还有toDegrees()
+Math.exp() 以e为底数
+Math.log(Math.E) == 1.0 
+Math.log10()
+
+14 int[] array = {1,2}; 这样是可以的，但是不能分开来
+int[] array; array = {1,2}; 这样是不可以的
+
+15 char[] str = {'H','i'};
+    System.out.println(str);        //这样会打出 Hi！
+    System.out.printf("%s\n",str);  //打出str的信息
+
+16 System.arraycopy(sourceArray, src_pos, targetArray, tar_pos, length); 复制数组
+    或者用 clone()
+
+17 可变长参数列表
+    他是做成一个数组放进去的。
+    double max(double... numbers)
+    实参可以是若干个double，也可以是一个double[]，也可以传0个double！
+
+18 Arrays类有很多和数组相关的静态方法
+    Arrays.sort()
+    Arrays.binarySearch()       返回index，注意要先排序才能binarySearch
+    Arrays.equals(list1, list2) 返回boolean，内容相等则equal
+    Arrays.fill()               把整个数组或者数组的一部分填充成一个某个元素
+
+19 多维数组
+    java中的多维数组很酷，可以这样：int[][] a = {{1,2},{1}};
+        也可以：int[][] a = new int[2][];
+                a[0] = new int[2];
+                a[1] = new int[1];
+    因为第一维的元素就是int[]，每一个数组都可以有不同的长度。
+    （而且因为java中数组有length这个field，所以就算每行长度不一样用起来也很方便）
+    （因为这个特性，所以循环最好这样写：for(int i=0; i<a.length; i++) for(int j=0; j<a[i].length; j++)）
+    在C里面相当于这样子：
+        int a1[2] = {1,2};
+        int a2[1] = {1};
+        int* a[2];
+        a[0] = a1;
+        a[1] = a2;
+    C中直接二维数组的话每一行的长度都是一样的。
+
+20 判断数独结果的正确性：
+    每行、每列、每3x3方格都调用一下一个判断是否1-9的函数，该函数里面用Arrays.sort()一下，然后就很容易判断了。
+    （注意sort是对数组本身操作，所以要先创建一个副本。）
+    3x3方格：
+        for(int i=0; i<3; i++)
+            for(int j=0; j<3; j++){
+                int[] a = new int[9];       //把这个方格的内容放在一个一维数组中
+                int k=0;
+                for(int row=i*3; row<i*3+3; row++)
+                    for(int col=j*3; col<j*3+3; col++)
+                        a[k++] = grid[row][col];
+                is1to9(a);
+            }
+
+21 引用变量的默认值是null，所以作为类成员的引用变量会自动初始化为null，但是局部变量就不会自动初始化。
+
+22 java中可见性除了public protected private 之外，还有另外一个，就是包内访问，即不使用修饰符。
+
+23 String中的一些方法
+    replace()       用一个char替换给定的char
+    replaceAll()    用一个String替换给定的String
+    replaceFirst()  用一个String替换第一个匹配的String
+可以使用正则表达式：
+    "Java is fun.".matches("Java.*")    返回true（注意正则表达式里面那个点是连接的意思）
+    "a+b$#c".replaceAll("[+$#]","NN")   结果是"aNNbNNNNc"
+    "Java,C?C++".split("[,?]")
+
+Character类中有一些确定字符类型的静态方法：
+    isLetter(), isDigit(), isUpperCase()等
+
+24 StringBuilder / StringBuffer类
+    两者唯一的区别是：
+        StringBuffer修改缓冲区是同步的。所以多任务并发访问必须用StringBuffer，单任务的可以用StringBuilder。
+    trimToSize()方法把内存长度裁剪成字符串的长度。
+
+25 eclipse中给main传递参数：run->run configuration->arguments 中直接输入
+        如果要把包含空格的字符串当作一个参数，则要"Hello world"
+        如果没有传参数，则JVM会 args=new String[0];  所以args.length == 0，而args != null
+    eclipse中输入输出重定向：run->run configuration->common 中设置input output file
+
+26 获得当前系统的行分隔符
+    String lineSeparator = System.getProperty("line.separator");
+
+27 JFileChooser
+    JFileChooser fileChooser = new JFileChooser();
+    if(fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){    //保存则是showSaveDialog()
+        File file = fileChooser.getSelectedFile();                          //CANCEL_OPTION
+        Scanner scanner = new Scanner(file);
+    }
+
+28 关于类变量
+    
+    298
+
+
+
+
+

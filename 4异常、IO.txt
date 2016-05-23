@@ -1,0 +1,226 @@
+1.For Short and Integer in the range of -128 to 127, and char in the range of \u0000 to \u007f, there are fixed value objects.
+就是说，那个范围里面，相同的值只会产生一个实例。（类似于相同的字符串常量的优化）
+    Integer.valueOf(3) == Integer.valueOf(3);       //true
+    Integer.valueOf(129) == Integer.valueOf(129);   //false
+
+2.异常
+之所以要Exception：
+    把处理错误的代码独立开来，增加可读性。
+异常结构：
+    JAVA中所有的异常都是对象，都是Throwable类的子类对象
+    Throwble本身有两个子类，Error和Exception
+    Error：
+        是程序无法处理的错误，表示运行应用程序中较严重问题。
+        大多数错误与代码编写者执行的操作无关，而表示代码运行时 JVM（Java 虚拟机）出现的问题。
+        例如，Java虚拟机运行错误（Virtual MachineError），当 JVM 不再有继续执行操作所需的内存资源时，将出现 OutOfMemoryError。
+        这些异常发生时，Java虚拟机（JVM）一般会选择线程终止。
+        对于设计合理的应用程序来说，即使确实发生了错误，本质上也不应该试图去处理它所引起的异常状况。
+    Exception：程序本身可以处理的
+        分为非运行时异常、RuntimeException
+        RuntimeException，不检查异常，可以捕捉也可以不管。包括什么除零啊数组越界啊什么的，一般是由程序逻辑错误引起的，程序应该从逻辑角度尽可能避免这类异常。（我觉得还是捕捉处理一下，就算要报错也通过我程序内部报错比较合理，别让JVM自己来）
+        非运行时异常都是必须处理的，必须try-catch处理，或者继续抛出，否则编译不通过。
+
+异常处理：
+    void f() throws Exception1{             //throws是给类或方法的使用者看的，若本方法中抛出但已经处理掉的就不用throws了
+                                            //编译器强制要求，当可能抛出非运行时异常以及他的父类时，必须声明throws
+                                            //因为编译器就是根据这个throws来让检查caller是不是有处理相应的异常的
+                                            //caller如果没有处理该异常，则仍要throws
+        throw new Exception();              //先new一个，然后把引用throw出来
+    }
+    void g(){
+        try{   
+          //（尝试运行的）程序代码   
+        }catch(异常类型 异常的变量名){      //异常发生之后，同个scope下面的东西都不做了，然后逐一检查catch
+          //异常处理代码                    //所以应该先catch子类
+        }catch(){                           //catch可以多个，一个匹配上了就不会继续下面的了。
+                                            //通过异常对象可以获取异常发生时完整的JVM堆栈信息，以及异常信息和异常发生的原因等。
+        }finally{
+        }                                   //离开这个try-catch代码块之前要执行的代码，不管有没有异常发生
+    }                                       //当在try块或catch块中遇到return语句时，finally语句块将在方法返回之前被执行！！
+                                            //若前面用了System.exit()，则不会执行finally
+                                            //目的是给程序一个补救的机会。这样做也体现了Java语言的健壮性。（比如某个值的设定是无论怎样都得做的，就在finally里面做）
+        catch(IOException | ClassNotFoundExceoption e)
+                                            //这样也行
+    try,catch,finally三个代码块中的变量的作用域均为本块内部，不能互相访问。
+Throwable中常用的方法：
+    getCause()：返回抛出异常的原因。如果 cause 不存在或未知，则返回 null。
+　  getMessage()：返回异常的消息信息。
+　  printStackTrace()：对象的堆栈跟踪输出至错误输出流，作为字段 System.err 的值。可以在参数中指定输出流
+Trap：
+当finall块中包含return语句时，Eclipse会给出警告“finally block does not complete normally”，原因分析如下：
+    1、不管try块、catch块中是否有return语句，finally块都会执行。
+    2、finally块中的return语句会覆盖前面的return语句（try块、catch块中的return语句），所以如果finally块中有return语句，Eclipse编译器会报警告“finally block does not complete normally”。
+    3、如果finally块中包含了return语句，即使前面的catch块重新抛出了异常，则调用该方法的语句也不会获得catch块重新抛出的异常，而是会得到finally块的返回值，并且不会捕获异常！！
+    所以一般不会在finally中return
+重写方法时，
+    只能抛出原方法throws声明的异常的子集。
+
+
+3.IO
+IO流分为字节流（InputStream, OuputStream）和字符流（Reader，Writer）
+文件操作（以文件为最小单位进行操作）
+    File f = new File("E:/nihao");
+    f.createNewFile();                  //文件不存在时新建一个
+    f.mkdirs();                         //创建文件夹以及路径上所有不存在的文件夹
+    f.delete();                         //删除文件夹或者文件
+    f.getTotalSpace();
+    f.getName();
+    f.getParent();
+    f.length();                         //!!
+    f.listFiles();                      //f为文件夹时，列出其中的文件们，返回File[]
+字节流
+    ByteArrayInputStream、StringBufferInputStream、FileInputStream 是三种基本的介质流，它们分别从Byte 数组、StringBuffer、和本地文件中读取数据。
+    FileInputStream
+        FileInputStream fileIn = null;          //这是惯用手段，先在try外面定义一个大家都可以用的变量
+        try{
+            fileIn = new FileInputStream(new File("1.txt"),true);       //第二个参数表示是否是追加模式！
+            while(fileIn.read() != -1)          //每次读一个字节，读到文件末尾就返回-1
+                cout++;                         //效率很低，因为每读一个字节就一次IO！解决办法是弄一个数组，每次读多点进来
+        }                                       //或者用
+        由于FileInputStream是有缓冲区的，所以必须关闭，否则可能造成数据丢失、内存占满。？？？？？？？？？？？？？？？？？？？？
+            finally{
+                try{
+                    if(fileIn != null)          //这里最好检查一下
+                        fileIn.close();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+    ObjectInputStream
+        装饰类，即需要其他类的对象才能产生对象。
+        实现了Serializable接口的类可以写入流，该接口没啥实质性内容，仅是一个标记而已。
+            ObjectOutputStream objectOut = new ObjectOutputStream(new FileOutputStream(new File("")));
+            objectOut.writeObject(new Student());
+            objectOut.flush();                        //写与读之间最好flush一下
+            Student a = objectIn.readObject();
+        注意：先进先出
+    DataInputStream 装饰类
+        把一个原生数据放进流里面（比如有时只要把类中的几个变量存一下就行）
+            DataOutputStream dataOut = new DataOutputStream(new FileOutputStream(new File("")));
+            dataOut.writeInt(10);
+            dataOut.writeUtf("hello");
+            dataOut.writeDouble(1.1);
+            dataOut.flush();
+            int i = dataIn.readInt();                   //还是先进先出
+    PushbackInputStream
+        特技是读完一个字节后可以回退。
+        .unread(',')    回到某个位置
+    SequenceInputStream
+        把多个流顺序合并成一个流：（接收一个实现了Enumeration接口的类的对象）
+            Vector<InputStream> vector = new Vector<>();        //Vector类实现了Enumeration接口
+            vector.add(fileIn);
+            vector.add(dataIn);
+            vector.add(objectIn);
+            Enumeration<InputStream> e = vector.elements();     //.elements获得一个Enumeration对象
+            SequenceInputStream sequenceIn = new SequenceInputStream(e);
+            //注意：SequenceInputStream读完其中的每个Stream之后都会调用他的close()去关掉，所以自己写的最好：
+            finally{
+                try{
+                    if(fileIn != null)
+                        fileIn.close();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+                try{                         //每个分别try，保证其中一个出错了其他也会被正常关闭
+                    if(dataIn != null)
+                        dataIn.close();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }                               //注意，那些链接流，只要close最里面那个FileInputStream就行了
+    BufferedInputStream 装饰类
+        自带缓冲区，创建一个实例实际上是给原来那个InputStream加上了缓冲区。
+        其他的字节流本身是不会用到缓冲区的，而字符流本身就用到缓冲区。
+        比如，要给一个ObjectInputStream对象加上缓冲功能
+            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream(f)));
+    PipedInputStream
+        用于进程间通信。
+        一个进程中的PipedInputStream可以通过.connect与另一个进程中的PipedOutputStream连在一起。
+    ByteArrayInputStream
+        ByteArrayInputStream byteArrayIn = new ByteArrayInputStream(str.getBytes());
+        把字符串转化成流，用流来处理字符串。
+    ZipOutputStream
+        压缩单个文件：
+            File file = new File("Z:/nihao.txt");
+            FileInputStream fileIn = new FileInputStream(file);
+			ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(new File("Z:/wohao.rar")));
+			zipOut.putNextEntry(new ZipEntry(file.getName()));             //打开rar之后里面的内容，一般就是输入文件的名字
+            int temp = 0;
+            while((temp = fileIn.read()) != -1)
+                zipOut.write(temp);
+        注意：由于linux和windows上路径分隔符不一样，为了兼容性，一般写成：
+            new File("z:" + File.separator + "nihao.txt")
+        压缩文件夹：
+            if(file.isDirectory)
+            {
+                File[] files = file.listFiles();
+                for(int i = 0; i < files.length; i++)
+                {
+                    input = newFileInputStream(files[i]);
+                    zipOut.putNextEntry(newZipEntry(file.getName()
+                        + File.separator +files[i].getName()));
+                    int temp = 0;
+                    while((temp = input.read()) !=-1){
+                        zipOut.write(temp);
+                    }
+                    input.close();
+                }
+            }
+        解压缩：
+            思路：通过ZipFile中的getInputStream(ZipEntry e)方法获得InputStream
+                File file = new File("d:" +File.separator + "zipFile.zip");
+                File outFile = null;
+                ZipFile zipFile = new ZipFile(file);
+                ZipInputStream zipInput = new ZipInputStream(new FileInputStream(file));
+                ZipEntry entry = null;
+                InputStream input = null;
+                OutputStream output = null;
+
+                while((entry = zipInput.getNextEntry()) != null){       //ZipInputStream就是为了获得下一个entry的
+                    System.out.println("解压缩" + entry.getName() + "文件");
+                    outFile = new File("d:" + File.separator + entry.getName());
+                    if(!outFile.getParentFile().exists()){              //补全路径中的文件夹
+                        outFile.getParentFile().mkdir();                //也就是说entry本身可以是"/s/s/s/s/s.txt"这样的
+                    }
+                    if(!outFile.exists()){
+                        outFile.createNewFile();
+                    }
+                    input = zipFile.getInputStream(entry);
+                    output = new FileOutputStream(outFile);
+                    int temp = 0;
+                    while((temp = input.read()) != -1){
+                        output.write(temp);
+                    }
+                    input.close();
+                    output.close();
+                }
+    输出重定向
+        System.setOut(new PrintStream(new FileOutputStream(file)));
+        System.setErr(new PrintStream(new FileOutputStream(file)));
+        System.out和System.err本身就是PrintStream类的实例
+字符流
+    字符流和字节流是相对独立的，字节流对于字节文件实现的功能，字符流对字符文件同样能实现。
+        BufferedReader reader = new BufferedReader(new FileReader(new File("")));
+    FileReader/FileWriter   （注意要实Unicode编码的文件才行）
+        FileReader reader = new FileReader(new File(""));
+    PrinterWriter
+        可以输出到文件或控制台
+        new PrinterWriter(System.out)
+    StreamTokenizer
+        处理Reader对象成为一个一个的token
+        StreamTokenizer tokenizer = new StreamTokenizer(new BufferedReader(new FileReader(new File(""))));
+        tokenizer.ordinaryChar('\'');
+        tokenizer.ordinaryChar('\"');       //若不这样设置的话，会把引号里面的所有内容当作一个token
+        while(tokenizer.nextToken() != StreamTokenizer.TT_EOF)
+        {
+            switch(tokenizer.ttype)
+            {
+            case StreamTokenizer.TT_EOL:break;      //行尾
+            case StreamTokenizer.TT_NUMBER:break;
+            case StreamTokenizer.TT_WORD:break;     //注意中文有点坑，连在一起的所有中文合起来都算一个token，包括中文标点！
+            default:                                //英文标点
+            }
+        }
+    InputStreamReader 是一个连接字节流和字符流的桥梁，它将字节流转变为字符流。
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        FileReader中其实就用了这个把FileInputStream转换成Reader

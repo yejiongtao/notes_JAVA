@@ -1,0 +1,247 @@
+1.Swing中的MVC
+    Swing的组件都是基于MVC的（一般是MVC的变体，把View和Controller结合起来了）。
+    对于简单的组件，如JButton,JToggleButton,JCheckBox,JRadioButton,JTextArea,JTextFeild等，没必要使用model模型，因为他们对应的model中的常用属性在组件本身也有，直接设置组件的属性与设置model的属性效果是一样的。
+    但是高级的组件就要用model了，如JSpinner,JList,JComboBox,JTable,JTree（可以理解成数据类型不定的组件就要自己写model）
+    每个组件有对应的model接口：ButtonModel，有一个默认的实现类DefaultButtonModel
+
+（要用model吗？（本身就能增删数据则不用model）有已有的model可以用吗？有抽象便利类吗？model接口？）
+    
+JSpinner 微调文本域
+    允许用户从一个有序序列中选择值，也可以直接输入一个合法的值。
+    简单的JSpinner：
+        如果不自己设置model的话，默认的是整数序列。
+            Spinner spinner = new Spinner();
+            frame.add(spinner);                 //就行了
+            spinner.addChangeListener(new ChangeListener(){
+                public void stateChanged(ChangeEvent e){
+                    //((JSpinner)e.getSource()).getValue()
+                    //不需要，直接spinner.getValue()就好，因为是内部类，可以直接访问局部变量！！（java8中不需要final就可以）
+                }
+            });
+            还有getValue()，getPreviousValue(), getLastValue()
+    SpinnerModel接口
+        AbstractSpinnerModel 是实现了SpinnerModel的抽象便利类，提供了注册和注销ChangeListener方法的实现。
+        SpinnerListModel, SpinnerDateModel, SpinnerNumberModel 是SpinnerModel的具体实现，可以直接用。
+        自定义model：可以通过扩展AbstractSpinnerModel，或者直接实现SpinnerModel接口
+        （一般来说，不用自己写了，用上面那三个已经很够了，再不济就再指定一个editor）
+
+        （我知道了！Abstract打头的是指这个是个抽象类，要扩展实现才能用，而中间那三个是可以直接用的。）
+        SpinnerListModel
+            把数据存在一个List里面，可以用数据或者列表来实例化。（用列表的好处是可变）
+                String[] values ={"nihao","hi","hello"};
+                ArrayList<String> list = new ArrayList<>(Arrays.asList(values));    //注意！用数组创建列表的方法！！
+                SpinnerListModel model = new SpinnerListModel(list);
+                spinner.setModel(model);
+        SpinnerNumberModel
+            可以是Java中的任何数值类型
+                SpinnerNumberModel model = new SpinnerNumberModel(10, 0, 20, 0.1);//（初始值value，minimum，maximum，stepSize）
+                minimum个maximum可以是null，表示没有上下界。
+            当然也能用model.setMinimun()啥的来设置属性。
+        SpinnerDateModel
+            四个属性：
+                初始值value，Calendar对象
+                开始日期start，可以是null
+                结束日期end，可以是null
+                步长calendarField，Calendar的常量，如Calendar.DAY
+            无参构造函数相当于 SpinnerDateModel(new Date()当前时间, null,null, Calendar.DAY_OF_MONTH);
+    Spinner的editor
+        editor是用来显示当前内容的那个textField，在JSpinner的构造函数中实例化。
+        分为默认的基类JSpinner.DefaultEditor，还有三个对应的NumberEditor,DateEditor,ListEditor
+        于是可以自己定义输出的格式：
+            JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(spinnerDate, "MMM dd, yyyy");
+            spinnerDate.setEditor(dateEditor);
+            JSpinner.NumberEditor yearEditor = new JSpinner.NumberEditor(spinnerYear, "####");
+            spinnerYear.setEditor(yearEditor);
+JList 列表框
+    可用Vector、数组、ListModel来创建JList实例。
+        layoutOrientation属性指定列表中条目的布局：
+            JList.VERTICAL 默认值
+            HORIZONTAL_WRAP 水平摆放，满了时换行。
+            VERTICAL_WRAP 垂直摆放，满了时换列。
+            (visibleRowCount可以指定可见的行数，若为0则是不指定。)
+        selectionMode选择模式
+            ListSelectionModel.SINGLE_SELECTION 单选（注意是定义在哪里的）
+            SINGLE_INTERVAL_SELECTION 按住shift可以选择连续的项
+            MULTIPLE_INTERVAL_SELECTION 按住ctrl可以选择多项，默认是这个。
+            （JList有两个model：ListModel管理数据，ListSelectionModel处理数据选择。默认情况下，JList使用DefaultListSelectionModel，这个类中的功能已经足够了，一般是不用自己实现ListSelectionModel接口的。）
+        fixedCellWidth,fixedCellHeight属性
+        getSelectedIndex,getSelectedValues方法
+        JList不支持滚动，要JScrollPane
+    ListModel
+        当需要添加新条目或者删除已有条目，就需要用ListModel
+        ListModel接口，有个AbstractListModel的抽象类，有个DefaultListModel的类扩展了抽象类。
+        DefaultListModel
+            一般用这个就已经足够了。有add,clear,remove,isEmpty等等，其实内部就是用Vector来存的。
+    ListCellRenderer接口
+        DefaultListCellRenderer实现了这个接口，用的是一个JLabel来显示，所以可以显示字符串或者图标。
+            要显示图标只要创建JList的时候把ImageIcon[]作为参数就好了。
+        要想同时显示图标和文字，或者显示一个GUI组件，就要自己实现ListCellRenderer（该接口只有一个方法）：
+            private JLabel label = new JLabel("");
+            private Border lineBorder = BorderFactory.createLineBorder(Color.black,1);
+            private Border emptyBorder = BorderFactory.createEmptyBorder(2,2,2,2);
+            
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, 
+                    boolean cellHasFocus){
+                //DefaultListModel使用Vector来存的，所以可以存任何东西
+                //value是当前选中的东西，如果是一个Object[]，包括icon和String，则：
+                Object[] pair = (Object[])value;
+                label.setOpaque(true);
+                label.setIcon((ImageIcon)pair[0]);
+                label.setText(pair[1].toString());
+
+                if(isSelected){
+                    label.setForeground(list.getSelectionForeground());
+                    label.setBackground(list.getSelectionBackground());
+                }else{
+                    label.setForeground(list.getForeground());
+                    label.setBackground(list.getBackground());
+                }
+                label.setBorder(cellHasFocus?lineBorder:emptyBorder);
+                return label;
+            }
+JComboBox 组合框（下拉列表框）
+    只允许一次选一项
+    可用数组、向量、ComboBoxModel来创建一个JComboBox
+    model
+        ComboBoxModel接口。MutableComboBoxModel扩展了ComboBoxModel，定义了增加和删除条目的方法。AbstractComboBoxModel是实现了MutableComboBoxModel的抽象便利类。DefaultComboBoxModel扩展了抽象类，JComboBox默认就是用这个model。
+        一般不需要指定model，因为JComboBox里面已经有获取、添加、删除条目的方法了：
+            getItemAt,getSelectedItem,addItem,removeItem等
+    选定一个新条目的时候，触发两次ItemEvent，一次取消之前的选定，一次选定当前的。然后触发ActionEvent。
+    与JList类似，可以通过实现ListCellRenderer接口来自定义单元格绘制器。
+JTable
+    如果不放到JScrollPane中，表头是不可见的，因为表头是放在JSrollPane的头部的。
+    JTable包含的支持接口和支持类：
+        TableModel接口，储存和处理数据。AbstractTableModel,DefaultTableModel
+        TableColumnModel接口，表示所有列。TableColumn类，包含一个具体列的信息。每一列有一个默认的编辑器和绘制，TableCellRenderer接口，TableCellEditor接口。
+        ListSelectionModel接口，用来在表格中选择行、列、单元格。
+        JTableHeader类，可用于显示表头信息。
+    可以用无参、model、两个数组、向量来创建JTable对象:
+        Object[][] data = {{"nihao",1,true},{"hello",2,false}}; //这种Object[][]很常见！！！
+        String[] colName = {"col1","col2","col3"};
+        JTable table = new JTable(data, colName);       //非常神奇，只要是基本类型，1和true他都会自动转换成对应的包裹类型。
+    JTable有很多决定表格形态的属性，是JavaBeans属性，可以直接set
+        autoResizeMode决定调整某一列会怎样影响其他列，默认是JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS，即后面的都会受影响。
+        gridColor，网格颜色
+        rowHeight
+        rowMargin，行间垂直留白，默认1像素
+        selectionForeground,selectionBackground
+        showHorizontalLines,showVerticalLines，是否显示表格线
+        等等
+    TableModel
+        需要增加行列什么的就需要用到model
+        DefaultTableModel使用向量存储数据的，提供了很多常用方法，一般用这个就够了。
+            addColumn,addRow,RemoveRow等等，注意没有removeColumn！！！！
+            而且！这些方法都是自带刷新的，不需要手动updateUI()
+        DefaultTableModel中所有的单元格都是可以编辑的！
+            要想变得不可编辑，就要重写isCellEditable()，就要手动扩展AbstractTableModel了
+            ！！不不不，应该直接扩展DefaultTableModel，然后重写需要的方法就好了。这样DefaultTableModel很多方法可以用。
+    TableColumnModel 接口
+        要删除列，就要用TableColumnModel
+        TableColumnModel管理表格中的列，能够用来选择、添加、移动、删除列。
+        DefaultTableColumnModel，在向量中存储列，用这个就够了。
+            TableColumnModel columnModel = table.getColumnModel();  //注意！！！每个实例都会创建默认的model，直接get
+            columnModel.moveColumns(0,1);                           //0列和1列换位置
+            columnModel.removeColumn(columnModel.getColumn(1));     //removeColumn的参数是TableColumn类型的               
+    TableColumn类
+        用来定制某一列。处理列宽、指定TableCellRenderer、TableCellEditor、表头绘制器。
+        通过TableColumnModel的getColumn()，或JTable的getColumn()获得
+    JTableHeader
+        创建JTable的时候会创建一个实例，用来存表头。
+        其中的reorderingAllowed默认为true，允许拉动表头变换列的顺序。
+    自动排序和过滤
+        排序：点表头就能自动排序
+            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+            table.setRowSorter(sorter);
+        过滤：（要跟TableRowSorter配合）
+            sorter.setRowFilter(RowFilter.regexFilter("U.*"),int[]{0,1});   //"U.*"以U开头的
+            静态方法regexFilter()的第一个参数是正则表达式，第二个是参与筛选的列（不指定则是所有列）
+    怎么把表格信息用ObjectOutputStream写到文件中：
+        ObjectOuputStream out = new ObjectOutputStream(new FileOutputStream(file));
+        out.writeObject(tableModel.getDataVector());
+        out.writeObject(table.getColumnNames());
+        out.close();
+    表格绘制器和编辑器
+        默认的绘制器显示toString()，编辑器即文本域。
+        JTable有一些预定义的绘制器和编辑器，用这些可以直接显示和编辑单元格中的某些类型的对象。
+            Object,Date,Number,ImageIcon,Boolean（显示为JCheckBox）
+                Boolean的初始值传一个true或者一个false进去就好了。
+            要想用这些绘制器，必须重写TableModel中的getColumnClass(int column)，因为TableModel就是根据这个函数来决定这一列用什么类型的绘制器和编辑器的。（当然很多时候要重写isCellEditable(int,int)，因为有些是不能修改的）
+            public class MyTableModel extends DefaultTableModel
+            {
+                public Class getColumnClass(int column)
+                {
+                    return getValueAt(0,column).getClass();
+                }
+                public boolean isCellEditable(int row, int col)
+                {
+                    if(col == 0) return false;
+                    else return true;           //举个栗子
+                }
+            }
+        自定义表格绘制器
+            可以通过扩展DefaultTableCellRenderer来实现，必须覆盖getTableCellRendererComponent()
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                boolean isFocused, int row, int column)
+                {
+                    Image image = ((ImageIcon)value).getImage();
+                    return new ImageViewer(image);                  //ImageViewer可以调整图片大小
+                }
+        自定义表格编辑器
+            只要创建一个文本域、复选框或组合框，作为参数传递给DefaultCellEditor的构造方法就好了。
+            初始化表格的时候，传给组合框的列只要是一个字符串就行，他会自动把这个字符串设置成JComboBox当前的项。
+    表格model事件
+        JTable本身只会触发从JComponent继承来的事件，没什么卵用。
+        其他时间都是model们触发的，当然，各种model都可以用JTable实例的get..Model()方法获得。
+            响应行和列的选择事件：ListSelectionModel，ListSelectionListener中的valueChanged()
+            响应单元格的编辑事件：TableModel，TableModelListener中的tableChanged()
+            响应列的删除事件：TableColumnModel，TableColumnModelListener中的columnRemoved()
+                上面说的那些listener中还有其他的处理函数，按需。
+JTree
+    也需要JScrollPane
+    支持的接口和类：
+        TreeModel接口，DefaultTreeModel类：树的数据并不存在这里，而是存在TreeNode和TreePath中。
+        TreeNode接口，MutableTreeNode子接口，DefaultMutableTreeNode类
+        TreePath类：是由TreeModel提供的一个排好序的Object数组。
+        TreeSelectionModel接口，DefaultTreeSelectionModel
+        TreeCellEditor接口，DefaultTreeCellEditor
+        TreeCellRenderer接口，DefaultTreeCellRenderer
+    可以用无参、model、TreeNode（根节点）、Hashtable（所有key作为node）、数组、向量来创建JTree
+        其中用Hashtable、数组、向量，默认是不显示根节点的，要setRootVisible(true)
+        （Hashtable本身已经被HashMap取代）
+    一些JavaBeans特性：
+        showsRootHandles，默认为true，表示显示node前面那个加号。
+        rowHeight
+        editable，默认是false
+    TreeModel和DefaultTreeModel
+        包含树的结构化信息，不直接存储或管理树的数据。
+        直接用tree.getModel()获得DefaultTreeModel对象
+            getRoot()
+            isLeaf()
+            getChildCount()
+            getChild()
+        要创建TreeModel，必须先创建一个TreeNode。一般是不用创建TreeModel了
+    TreeNode，MutableTreeNode，DefaultMutableTreeNode
+        DefaultMutableTreeNode用一个向量来维护孩子节点列表，提供了创建节点、检查和修改结点的父节点和孩子节点、检查结点所在的树。
+        有一堆方法，什么getFirstChild()，add()，removeFromParent()，getDepth(), getLevel()，应有尽有！
+        breadthFirstEnumeration(),depthFirstEnumeration(),postorderEnumeration(),preorderEnumeration()，返回一个Enumeration
+            Enumeration是一个接口，本身并不是一个数据结构，但实现了这个接口的数据结构就可以通过nextElement()来遍历所有项。
+            比如这里第一个nextElement是第一个遍历到的node
+                Enumeration<TreeNode> nodes = ((DefaultMutableNodeModel)tree.getModel().getRoot()).depthFirstEnumeration();
+                while(nodes.hasMoreElements())
+                    system.out.println(nodes.nextElement());
+    TreePath和TreeSelectionModel
+        JTree中的getLeadSelectionPath()可以获得从root到选定节点的路径，用TreePath的getLastPathComponent()可以获得路径的最后一个节点，然后用getParent()可以沿着路径往上走。
+        一般不用自定义TreeSelectionModel。
+        TreeSelectionModel的setSelectionMode()可以规定选择的方式（单选、连续选、不连续选）。
+    绘制器与编辑器：
+        DefaultTreeCellRenderer中有setLeafIcon(),setOpenIcon(),setClosedIcon(),setBackgroundSelectionColor()。
+        把组件传给DefaultCellEditor的构造方法来指定编辑器：
+            tree.setCellEditor(new DefaultTreeCellEditor(comboBox));
+            tree.setEditable(true);                             //一定要的！
+        但是这样有两个问题：点一下下拉框就下来了，而且跟图标重叠了，解决：
+            tree.setCellEditor(new DefaultTreeCellEditor(tree, new DefaultTreeCellRenderer(), DefaultTreeCellEditor(comboBox)));
+            这样就要点三次才会下拉，而且不会重叠。
+    树事件
+        JTree触发TreeSelectionEvent（选择新节点时），和TreeExpansionEvent（展开或折叠新节点时）。
+
+

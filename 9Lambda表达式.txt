@@ -1,0 +1,46 @@
+1.Java8的新特性，支持Lambda表达式
+    Lambda表达式用来代替功能接口。
+    语法如下：
+        (parameters)->expression
+        (parameters)->{statements;}
+        如：
+        ()->5
+        (x,y)->x+y
+        (int x,int y)->x-y
+        (String s)->System.out.println(s)
+
+
+// 使用匿名内部类  
+btn.setOnAction(new EventHandler<ActionEvent>() {  
+          @Override  
+          public void handle(ActionEvent event) {  
+              System.out.println("Hello World!");   
+          }  
+    });  
+// 或者使用 lambda expression  
+btn.setOnAction(event -> System.out.println("Hello World!")); 
+
+// 1.1使用匿名内部类  
+new Thread(new Runnable() {  
+    @Override  
+    public void run() {  
+        System.out.println("Hello world !");  
+    }  
+}).start();  
+// 1.2使用 lambda expression  
+new Thread(() -> System.out.println("Hello world !")).start();  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

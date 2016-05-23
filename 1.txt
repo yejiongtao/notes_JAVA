@@ -1,0 +1,166 @@
+1.解释型语言有特殊的计算能力：Python
+编译型语言有确定的运算能力：JAVA，C
+
+2.通常JAVA的工程名小写，类名首字母大写，变量名和函数名小写开头
+shfit+home/end，选择一整行
+System.out.println(10+20);会打出30！
+如果是选择提示的东西，Eclipse会自动加上需要的包；自己打就不会！
+Eclipse里面允许多个程序同时运行！所以要确保程序已经退出了
+
+3.Scanner in = new Scanner(System.in);  //注意这只是一个对象，得在in.next()啥的时候程序才会停下来等待输入
+                                        //in流中还有剩下的东西的时候就直接读，没有的话就停下来等待
+System.out.println(in.nextLine());      //还有nextInt()啥的，就能实现各种输入了
+                                        //输入的与读的类型不匹配的话会抛出一个异常
+System.out.println(in);                 //打印一个对象，会把他的属性啥的打印出来
+System.out.println("hello"+2+3);        //hello23
+System.out.println(2+3+"hello");        //5hello
+
+4.final int AMOUNT=10;                  //final相当于C中的const
+由于浮点数的精度问题，对于精度要求较高的环境可以考虑转化成整数进行储存、运算。比如银行以分为单位，而不是元为单位，避免累积误差。
+JAVA中的内置数据类型：
+    char    就只是字符！\u0000~\uffff，是两个字节！两个字节！用的是Unicode编码
+            注意！由于JAVA中char是没有符号的，而且两个字节，所以一个汉字也是用一个char来储存！
+    byte    ！-128~127
+    short   2B  0x12十六进制，012八进制
+    int     4B
+    long    8B  因为JAVA是用虚拟机的，所以这些长度都是确定的。
+    float
+    double 
+与C中一样，整型常量被当作int，浮点常量被当作double，可以加后缀来改变：123L/l，1.2f/F，1.2d/D，就这三个
+JAVA中boolean和整型是不能互相转换的！！
+boolean可以做等值比较，不能做Comparison比较
+
+5.两个表达式相加，是先算左边的表达式，再算右边的
+JAVA中是不能把宽的数隐式转换成窄的数的
+强制类型转换不会四舍五入
+强制类型转换的优先级是比较高的，(int)i/j，转换是只作用在i上面的
+Math.round(10.8)，注意这个的结果是long
+Math.abs()，绝对值，absolute
+Math.random()，0-1的随机数
+
+6.关于那些控制字符，想象一下打字机是怎么工作的就很好理解了，比如\b只是回退不是删除，\n只是换行而不会把当前光标后面的字符都弄到下一行去。
+现在的终端里，\n和\r做的是一样的事，即回车+换行
+Eclipse中快速注释代码的方法：Ctrl+/  ,VS中是Ctrl+KC，Ctrl+KU
+Shift+Tab，删掉一个缩进
+
+7.注意单目运算符的优先级是很高的，包括逻辑非运算符！，比比较运算符还高。（其他逻辑都比比较低）
+debug的时候居然可以双击修改变量的值！
+source->format，会自动把格式弄好，包括符号两边的空格。
+swtich-case语句其实就是if-else语句+goto语句。那些case都是标号来的，并没有分隔的功能，也就解释了为什么需要break
+
+8.数组
+int[] numbers = new int[count]; //数组的个数可以是变量！个数一旦确定不能改变
+                                //JAVA中数组都是new出来的，出了作用域还是在的。所以是不用担心返回值被清理掉的问题的！
+numbers.length                  //成员变量，good！比C的数组好多了
+int[] numbers = {1,2,3,4,5};    //直接初始化数组，作用包括new和初始化。（这时候.length就很好用了）
+for-each循环：
+    for( int k : numbers)       //注意k必须在这里面声明
+    {}                          //但是这种东西是没办法改变数组中的东西的，因为是读出来放到k中
+int[] b = a;                    //b只是a的别名
+
+9.Java中任何函数都必须是类的成员
+public static 意义跟C++一样
+JAVA中定义函数时形参一定要有名字。。
+JAVA中，local variable中，小的作用域中不能声明大的作用域中已经出现过的变量。C中是可以覆盖的
+
+10.包裹类型：Boolean, Character, Short, Integer, Long, Float, Double
+    Integer i = 10;
+    Integer i = new Integer(10);
+    Integer i = new Integer("10");  //得到的也是10！高级！'10'的话是非法的。
+    int j = i;                      //所有的包裹类型和基础类型之间都可以直接转换。（自动打包/解包）
+包裹类有一些方法、成员变量，这就是他存在的意义：
+    Integer.MAX_VALUE           //这些都是静态方法
+    Integer.MIN_VALUE
+    Integer.parseInt("12");
+    Integer.valueOf(in.next());
+    Integer.valueOf("12",16);   //用十六进制去理解，这个就很爽了，随便什么进制输进来
+    Integer.toString(i);        //所有的JAVA类都有这个方法，估计那些是要重写的
+    Integer.toBinaryString(i);  //二进制。好多方法啊！好方便啊！
+    Character.isLetter('a');
+    Character.isDigit('s');
+    Integer.compare(i,j);       //包裹类型也可以直接用<比较，会自动解包，比的是值不是地址。
+                                //但是==比较的仍然是地址！！<会自动解包是因为本身<就不能用来比地址
+
+11.类的变量都是管理者不是所有者，就像数组名一样。（对象名都是指针！都是！不像C++有很多种）
+所以Java中创建对象都得用new！！也因为如此，所以函数返回的时候就不用担心局部对象会被干掉了。
+String
+    String s = "hello";                 //其实也做了new！！
+    String s = new String("Hello");
+    s.equals(t);                        //s==t比较的是地址！因为对象名都是指针！都是指针！
+                                        //但是分别直接String s = "" 这样新建String时==是true的，因为String不可修改，所以编译器优化了只生成一个对象了（只发生在编译时可见的时候）
+                                        但只要其中一个是new出来的，就不是同一个地址了。
+    s.equalsIgnoreCase(t);
+    s.compareTo(t);
+    s.trim();                           //由于String是不可改的，所以所有成员函数都是生成了一个新的字符串，原来的s不变
+    s.toUpperCase()
+    s.charAt(3)
+    s.subString(1,5)                    //注意这里的5是不包括在结果里面的
+    s.indexOf('e')
+    s.startsWith(s2)
+    String[] s1 = s.split(" ");         //以空格为依据分裂字符串，得到一个字符串数组
+因为String是不能改的，而且是new出来的，所以String作为函数参数的时候，函数里面直接=那个参数就可以了，不用重新new了。
+如果String要多次加的话，用StringBuffer，每次append()，最后toString()就好了。这样开销会小一点。
+
+s.intern()，在一个pool中找，如果pool已经相同内容的String，则返回pool中的那个的引用；若没有，则添加到pool里面并返回s的引用。
+    s.intern()==t.intern()等价于s.equals(t)
+    即pool里面的String都是unique的
+
+String.format("%d",i)   产生一个格式化的String
+
+12.冒泡排序，不要老是换个不停，每一轮记下最大的下标，结束后跟最后一个换就行了。
+
+13.类
+类成员变量可以直接赋初始值（C++也是可以的）：private int i = 10;（这些赋值在构造函数之前完成）
+public static void main()也是一个成员函数，所以它是可以访问当前类的私有变量的！！（只能访问static的）
+this.name   
+this(name);     在某一构造函数中这样调用其它构造函数
+成员变量，JAVA会自动赋初值为0，本地变量不会。
+
+14.对象作为类成员的时候，一定要=new ...或者在构造函数中new。（包括String！）
+JAVA也有printf的：System.out.printf("%02d\n",i);    其中0表示这个数不足两位的时候用0补足。
+JAVA中每个类里面都可以有main，你运行的是那个类就是用里面的main。
+在同一个package中的类之间可以直接用，package是用来管理类的
+    若要用同一工程的另一个包的类，就要import了，当然也是可以让eclipse帮忙完成的
+    包内还可以有包，eclipse里面创建时就用.来表示包含关系
+
+15.""+i                     //这样方便地转化成字符串
+public String toString()    //每个类都可以重写这东西
+java.lang包是不需要import的，默认就是在那里面找东西。String就在lang里面
+ArrayList<int> 容器
+
+16.继承
+class CD extends Item
+大件事啦！！C++里面用父类指针指向子类对象，调用方法时只有当该方法是virtual的时候才会动态绑定！
+    但是JAVA是会记录这个对象是什么对象的，用父类指针指向子类对象时，调用的方法总是子类的方法！！！真是方便！！所以JAVA中可以经常用父类来做事情。
+但是！！！
+    用父类指针调用子类的非重写方法的话是不行的，因为编译器只知道是个父类的指针，里面找不到那个方法，就报错了。
+    （静态类型是Item，动态类型是CD）
+创建类的时候可以在那个wizard里面指定父类
+子类中
+    super(i);   调用父类的构造函数
+    super.f();
+
+17.
+Upcast：把子类对象交给父类变量去管理
+Downcast：把父类对象交给子类变量去管理，方法是强制类型转换。
+    Car car=(Car)vechicle;  不一定是安全的，只有当vechicle里面真的是一个Car对象的时候才是安全的。（否则运行时会出异常）
+Java中所有类的父类都是Object（所谓单根结构）
+    toString()就是定义在Object里面的
+
+18.JAVA中switch-case可以用String
+
+19.Random 上面我们使用Math.random()的
+    Random randomGenerator = new Random();
+    randomGenerator.nextInt()          //范围是整个int
+    randomGenerator.nextInt(10)        //0-10
+
+20.Calendar     Data类早就不用了，直接用Calendar
+    Calendar c = Calendar.getInstance();    //由于日历是与语言环境有关的，代码不能写死，只能用反射来根据运行的环境获得对象。
+                                            //于是Calendar被做成了抽象类
+                                            //获取实例的时候其日历字段已由当前日期和时间初始化
+    c.getTime()等等
+
+21.sleep()
+try{
+    Thread.sleep(2000);                     //2000 ms
+}catch(InterruptedException e){}

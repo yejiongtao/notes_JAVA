@@ -1,0 +1,150 @@
+1.CDN（Content Delivery Network）
+    把网站上静态的东西事先推送到各节点上，用户请求的时候在最近的节点上取得静态内容，与服务器上取得的动态内容拼接返回。
+    避免了会影响速度和稳定性的瓶颈和环节（比如教育网与外网之间的通道）
+中型网站架构（豆瓣那一类）
+    CDN挡掉静态部分的流量
+    Web应用服务器
+    文件存储服务OSS，内存缓存服务OCS
+
+2.writeObject()，作用相当于Python的pickle
+
+3.泛型Generic
+好处：
+    若没有泛型，为了实现参数任意化，采取的办法是用Object做参数，缺点是要用强制类型转换，而编译器是无法检查的。
+限制：
+    泛型的参数类型只能是类类型（Integer），不能是简单类型（int）
+    同一种泛型可以对应多个版本（废话），不同版本的泛型类实例是不兼容的。即List<String>与List<Object>是不兼容的
+    泛型的类型参数可以有多个
+    泛型的参数类型可以使用extends语句，称为“有界类型”
+    泛型的参数类型还可以是通配符类型
+使用：
+    （语法比C++简练多了）
+    （一般用一个大写字母表示类型，E集合中的element，K、V map中的key、value，T、U、S任意类型）
+    泛型类：
+        class Pair<T>{}
+        class Son extends Pair<Integer>{}   //参数化
+        使用时若不指定类型，则为Object。
+
+    泛型接口：
+        interface Show<T,U>{  
+            void show(T t,U u);  
+        }  
+          
+        class ShowTest implements Show<String,Date>{        //注意这里！参数化了泛型！ 
+            @Override                                       //批注，说给编译器的话。这里是说如果不是Override记得告诉我
+            public void show(String str,Date date) {  
+                System.out.println(str);  
+                System.out.println(date);  
+            }  
+        }  
+
+    泛型方法：
+        public static <T,U> T get(T t, U u)
+        { return t;}
+        使用泛型方法的时候，可以指定类型，也可以不指定。不指定的时候，泛型变量的类型为该方法中的（对应此泛型变量的）几种类型的同一个父类的最小级，直到Object。
+            <Integer,Double>get(1,2.0);
+            get(1,2.0);
+
+    泛型变量的类型界定：
+        <T extends Object&Comparable>   可以是类，也可以是接口，都用extends
+        如果既有接口也有类，那么类必须只有一个，并且放在首位置
+        
+    例子：实现相加
+        public static <T extends Number, U extends Number> double add(T t, U u)
+        {
+            return t.doubleValue() + u.doubleValue();
+        }
+
+    若需要收集参数化类型对象，用ArrayList：
+        ArrayList<Pair<String>>
+        用数组则不行：
+            Pair<String>[]是不行的。因为类型擦除后你把随便一个Pair放进去都是编译ok的，但是显然不符合程序员初衷。
+            Pair<?>[]则是可以的，初衷就是啥Pair都可以放。要这样：
+                List<?>[] lsa = new List<?>[10]; // ok, array of unbounded wildcard type
+                Object o = lsa;
+                Object[] oa = (Object[]) o;
+                List<Integer> li = new ArrayList<Integer>();
+                li.add(new Integer(3));
+                oa[1] = li; // correct
+
+    由于是伪泛型，所以是不能实例化泛型类型的:
+    之所以不能实例化，是因为类型擦除之后创建的就是Object了，有悖初衷。
+        T t = new T();      错误，相当于Object()
+        T[] a = new T[2];   错误，相当于Object[2]
+        可以用反射来实现：
+            public static <T extends Comparable> T[] minmax(T[] a)  
+            {  
+                T[] mm == (T[])Array.newInstance(a.getClass().getComponentType(),2);  
+                return (T[]) mm;  
+            }  
+
+    类的静态成员、方法不能用T，因为T是创建实例的时候才指定的。
+    而类成员本身可以是一个泛型方法。
+
+原理：
+    与C++中为每个模板实例化产生不同的类型不同，JAVA中的泛型是伪泛型，即编译过后已经被替换成原始类型（raw type），并在需要的地方加入了强制类型转换而已。（生成的代码与早期程序员自己用Object实现的是一样的，使用泛型只是为了编译器能检查类型而更加安全）
+
+类型擦除type erasure
+    a.一个List<String>和一个List<Integer>的.getClass()是一样的，都是List
+    b.若没有界定，则原始类型是Object，若有，则是第一个边界的类型。
+    c.之所以类型擦除之后编译器还能检查类型是不是匹配，是因为检查匹配是在编译之前的。而这个类型检查，是根据声明管理者的时候声明的类型来检查的，所以，List<String>和List<Object>不能兼容，否则就乱套了。
+    d.之所以不能是简单类型，是因为类型擦除后，都变成Object，统一地只能存一个引用，而简单类型是没有引用的，double不知道存哪。
+    e.异常机制中，不能抛出或捕获泛型对象，因为类型擦除后没办法区分多种异常类型了。
+    f.加强制类型转换是在调用的地方，泛型的里面是擦得一干二净的，所以才能公用一份代码。
+
+通配符的使用
+    由于泛型的参数不考虑继承，即List<String>与List<Object>不兼容，所以当需要兼容多种参数的时候，就得用通配符。
+    例如：
+        void printCollection(Collection<?> collection){}    //Collection是容器们的父类
+    其实这样也可以：
+        <E> void printCollection(Collection<U> collection){}
+    上次出现的这个也就是：
+        Class<?> returnClass(){}
+    
+    通配符的边界：
+        Vector<? extends Number>    匹配Number以及他的子类
+        Vector<? super Integer>     匹配Integer以及他的父类
+    
+    注意！！
+        在方法public static void printCollection(Collection<?> collection){}中不能出现与参数类型有关的方法比如collection.add();因为程序调用这个方法的时候传入的参数不知道是什么类型的，但是可以调用与参数类型无关的方法比如collection.size();
+        （一个泛型给你的时候已经是raw type了，所以不知道是什么类型）
+    事实上，<?>相当于<? extends Object>，所以只能调用Object有的函数。如果是<? extends Animal>，那么Animal有的函数都可以。
+    
+    任何<? extends Bird>的都不能add，因为任何Bird的子类都可以传进来，就无法在编译的时候判断add进去的东西是不是传进来的类的子类对象。
+    而<? super Bird>可以add Bird以及他的子类的对象，因为无论如何传进来的都是Bird以及他的父类。
+
+
+据说JAVA的泛型之所以这么烂是因为。。一开始懒得弄泛型，后来要弄的时候为了兼容老代码就搞出个这样的伪泛型。。。
+
+
+4.反射
+    通过反射机制访问java对象的属性，方法，构造方法等。
+获取类型：
+    Class c = Class.forName("Integer");     //Class的静态方法
+    Class c = Integer.class;                //每个类都有class属性
+    class c = i.getClass();                 //通过对象获得类
+创建对象：
+    Object o = c.newInstance();             //产生的是Object
+获取整个类：
+    Field[] fs = c.getDeclaredFields();     //获取所有属性
+
+    StringBuffer sb = new StringBuffer();  
+    //通过追加的方法，将每个属性拼接到此字符串中 
+    
+    //最外边的public定义  
+    sb.append(Modifier.toString(c.getModifiers()) + " class " + c.getSimpleName() +"{\n");  
+
+    //里边的每一个属性  
+    for(Field field:fs){  
+        sb.append("\t");//空格  
+        sb.append(Modifier.toString(field.getModifiers())+" "); //获得属性的修饰符，例如public，static等等  
+        sb.append(field.getType().getSimpleName() + " ");       //属性的类型的名字  
+        sb.append(field.getName()+";\n");                       //属性的名字+回车  
+    }  
+    sb.append("}");  
+
+获取特定的属性：
+    c.getDeclaredField("id");
+    
+还有获取方法啥的。
+

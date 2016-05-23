@@ -1,0 +1,57 @@
+1.JDBC API
+    JDBC API是用来访问各种数据库的统一接口，通过各种数据库的JDBC驱动器与数据库相连。
+    （JAVA定义接口，JDBC驱动程序开发商实现这些接口）
+    纯JAVA写的JDBC能在JApplet中使用，但是JDBC-ODBC桥式连接的就不行，因为ODBC是用C写的，不能在浏览器里面跑。（比如Access）
+四个主要接口：
+    Driver
+    Connection
+    Statement
+    ResultSet
+基本操作
+    加载驱动程序
+        Class.forName("org.sqlite.JDBC");
+        Class.forName就是创建一个org.sqlite.JDBC对象，这个对象实现了Driver接口。
+    建立连接
+        Connection connection = DriverManager.getConnection(databaseURL);
+        Connection connection = DriverManager.getConnection(databaseURL, user, password);
+    创建语句
+        Statement statement = connection.createStatement();
+    执行语句
+        对于没有返回值的语句：
+            statement.executeUpdate("create table Temp(col1 char(5), cols int)");
+        有返回值的：
+            ResultSet resultSet = statement.executeQuery("select * from table1");
+        执行未知的sql：
+            if(statement.execute(sql))              //如果返回的是ResultSet，则true
+                ResultSet resultSet = statement.getResultSet();
+    处理ResultSet
+        当前行的初始值为null，用next()进入下一行，用get获得值
+            while(resultSet.next())
+                System.out.println(resultSet.getString(1)+" "+resultSet.getString(2));
+                //第一列为getString(1)，也可以直接getString(列名);
+    connection.close();
+PreparedStatement
+    用于执行含参数或不含参数的查询，由于是预编译的，重复执行时效率高。
+        PreparedStatement preparedStmt = connection.prepareStatement("insert into table1 values(?,?)");
+        preparedStmt.setString(1, "nihao");     //下标从1开始！！
+        preparedStmt.setInt(2, 100);            //这里的效果跟setString(2,"100")一不一样？应该不一样，setString进去应该是'100'
+        preparedStmt.executeUpdate();           //不用参数了
+CallableStatement
+    用于执行与SQL procedure相关的东西的，不是很懂。
+        CallableStatement callableStmt = connection.prepareCall(".....");
+        继承PreparedStatement，所以有他的那些方法。
+获取元数据
+    DatabaseMetaData 获取数据库层面的元信息
+        DatabaseMetaData dbMetaData = connection.getMetaData();
+        dbMetaData.getURL()，getUserName()，等等
+        ResultSet rsTables = dbMetaData.getTables(null, null, null, new String[]{"TABLE"});     //获取表的信息
+		while(rsTables.next())
+		{
+			System.out.println(rsTables.getString("TABLE_NAME"));       //结果集里有一列是表名
+		}
+    ResultSetMetaData 获取某ResultSet的元信息
+        ResultSetMetaData rsMetaData = resultSet.getMetaData();
+        getColumnCount()    列数
+        getColumnName(i)    列名。下标从1开始！！
+        getColumnType(1)    返回int，sql.Types中定义了一些int常量表示sql中的数据类型
+

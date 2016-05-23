@@ -1,0 +1,126 @@
+先定义接口，再考虑实现。
+
+1.顺序容器——按放进去的顺序排列对象，允许相同值的多个对象存在。
+        把一个对象放进容器，实际上只是把指针放进去！
+ArrayList<String> notes = new ArrayList<String>();
+    notes.add(s);
+    notes.add(1,s);     //加到指定位置。注意index太大的时候也会抛出异常
+    notes.size()
+    notes.get(1)        //若下标越界，则跟数组一样抛出异常
+    notes.remove(1);    //删除后返回被删除的东西！
+    notes.remove("hi"); //返回boolean
+    notes.toArray(a);   //用容器内容把给定的数组给填起来
+    System.out.println(notes);  //输出所有
+
+2.对于对象数组，for-each循环中的变量是指针，所以是可以用来更改对象内容的
+for-each循环对于容器类来说也是可以用的。
+    ArrayList<String> a = new ArrayList<String>();
+    for(String s: a){}
+
+3.集合容器Set——所有的元素都是唯一的，且没有顺序
+HashSet<String> set = new HashSet<String>();
+    set.add("");        //加的时候可以有重复的，但是重复的不会被储存罢了
+    System.out.println(set);  //输出所有
+    遍历直接用for-each即可
+
+4.hash表——Java的Hash表可以以任何实现了hashCode()函数的类的对象做值来存放对象。
+HashMap<Integer, String> coinNames = new HashMap<Integer, String>();    //<key, value>，注意是Integer不能使int
+    coinNames.put(1, "penny");  //如果再put一个相同键值的，会覆盖之前的
+    coinNames.get(10)           //如果没找到，返回null
+    coinNames.contiansKey(10)   //返回boolean
+    coinNames.keySet()          //把key做成一个set
+遍历：
+    for(Integer i: coinNames.keySet())
+        coinNames.get(i)
+注意，当key是String的时候，也是用String的值去做匹配的。至于自定义的类做key，就得自己重写hashCode方法来计算hash值
+HashSet是set类型容器的常用类，HashMap是常用的一种map容器，Hash是指使用hash算法进行储存的。
+
+5.程序设计原则
+消除代码复制：两个基本手段——函数和父类。
+模块间耦合度要低：
+    不要直接用类的成员变量，可以考虑让那个类自己去做一些事情。
+    设计类的时候要假设类之间完全是不可见的。
+要有可扩展性，即将来改变的时候大部分代码可以维持不变：
+    比如现在是文字界面，考虑到以后可能是图形界面，所以做一个专门用于输出的函数，以后就改这个函数就好了。（数据与表现分离）
+    比如采用容器来枚举一些值，当需要增加值的时候，就只要往容器里面增加就可以了。（Hash表很好用）
+        这种方法叫框架和数据，用一个容器做框架，数据按需加，就具有可扩展性。如果Hash表的value需要是一个函数，可以做成一个类然后new一个对象作为value。
+
+6.抽象类abstract
+抽象类不能制造对象，但可以有指针。
+只要有一个抽象方法，则类必须声明为抽象类。
+抽象方法没有方法体，抽象类的子类必须覆盖所有的抽象方法，否则该子类也是抽象类。
+
+7.接口
+    接口其实就是完全抽象的类，因此接口和类的地位是一样的，此前所有针对类的所有法则同样适用于接口。
+    接口不能有构造函数。（一般的抽象类可以有构造函数）
+    接口所有的方法都是没有方法体的，而且都是public abstract。
+    接口中的所有成员变量都是public static final的变量，并且必须有定义初始化，因为所有变量都必须在编译的时候有确定值。
+    Java不允许多继承（除了C++的所有OOP语言都不支持），但是允许一个类实现多个接口，也允许一个接口从多个接口得到继承（注意是extends，不是implements），但是不允许接口从类继承。
+接口是抽象类，所以不能创建实例，但是可以有管理者，这个管理者可以管理所有实现了这个接口的类。
+public interface Cell{
+    void draw();
+}
+
+面向接口的编程方式：
+    一个类需要一个接口，就定义了这个接口。别的类再去实现这个接口。
+    是JAVA成功的关键之一！因为极适合多人同写一个大程序。但是代码量膨胀也快，本来只要一个类，现在要先来几个接口，再来一个类。
+
+8.if(i instanceof C)    //如果对象i是类C的一个实例
+    C c = (C)i;
+
+多创建包！把相关的类放到包里面，整个程序的组织才好一点。
+代码写完还有无数优化的事情可以做！！
+
+9.Swing的基本思想是
+    容器里面放部件或另外的容器，layout是容器用来管理部件的东西。
+事件机制：
+    有个接口叫ActionListener，每个部件都有addActionListener(), removeActionListener()。如果对某部件的某事件感兴趣，就实现一个ActionListener接口的对象，交给这个部件。
+    btn.addActionListener(new ActionListner(){  //这里的意思实际上就是说定义了一个内部类，这个类实现了ActionListener接口！！
+        @Override                               //成为匿名类。（new对象的时候给出类的定义，可以是实现接口或者继承父类）
+                                                //Swing的消息机制广泛使用匿名类，因为太多了
+        public void actionPerformed(ActionEvent e){
+            //...
+        }
+    });
+
+10.内部类（类里面定义的类，或者函数内部的类）
+    可以访问外部类的所有成员。
+    外部是函数时，内部类可以访问外部类的成员变量、方法；但是只能访问那个函数的final变量。
+        （java8中已经不限制只能访问final局部变量了！！）
+
+11.
+JFrame frame = new JFrame();        //容器
+frame.pack();                       //自适应大小
+frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   //不然是关不掉的
+frame.setVisible(true);
+
+12.JTable
+    光是new一个JTable出来是不行的，因为JTable并不储存数据，而只是数据的表现。
+    JAVA中很多地方都体现了数据与变现分离的思想，
+public class TableData implements TableModel {} 重写那些虚函数，数据结构自己定。（这样很方便）
+    里面有个有意思的函数
+    public Class<?> getColumnClass(int arg0){
+        //写上：
+        return String.class;                    //很有意思！返回某个类型！！！
+                                                //可以直接 if (getColumnClass() == String.class)
+    }                                           //对于一个对象，则是getClass()
+    Class.forName("Integer")返回一个Class<?>类型
+
+然后主函数里面：
+JTable table = new JTable(new TableData());
+JScrollPane pane = new JScrollPane(table);      //JTable本身是没有scroll的功能的，必须要有这个
+frame.add(pane);
+
+12.MVC设计模式
+Model、View、Control三者分离
+    Model：保存和维护数据，提供接口让外部修改数据，通知View刷新
+    View：从Model获得数据，根据数据画出变现
+    Control：从用户得到输入，根据输入调整数据
+View和Control没有联系。
+图形界面实现中，View和Control常常一起实现
+
+13.Java中链表的实现
+    Class Node{
+        int data;
+        Node next;
+    }

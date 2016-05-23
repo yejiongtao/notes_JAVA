@@ -1,0 +1,82 @@
+final
+    修饰类：不能被继承了
+        其中的方法默认都是final的
+    修饰方法：不能被重写了
+    修饰变量：值不能变了
+static
+    修饰类：不常用，只能用于内部类
+    修饰方法、变量：静态方法中不能出现this、super
+        abstract 和 static不能同时修饰一个方法。
+        注意！局部变量不能是static的！
+        static方法只能出现在static类、或者top level类中
+    修饰代码块：
+        静态代码块，无论在哪，都是先执行的。
+        多个静态代码块按出现顺序执行。
+        每个代码块只会被执行一次。
+        静态代码块不应包含在任何方法中。
+            class Parent
+            {
+                Parent(){
+                }
+                {
+                    System.out.println("非静态代码块");
+                }
+                static{
+                    i=100;
+                    System.out.println("静态代码块");
+                }
+                static int i=10;
+            }
+            当执行new Child()时，执行顺序是：
+                父类静态代码块、本类静态代码块、父类非静态代码块、父类构造方法、本类非静态代码块、本类构造方法。
+                （真是是先执行父类的静态代码块！！因为static initializer用来初始化静态变量嘛，子类继承的时候会把静态变量一并继承过来，所以当然得父类的静态代码块先做。）
+            类的静态代码块是装载的时候就执行的，是在main之前的。
+            上面那个i的值应该是10，若static int i=10;在那个静态代码块之前，则i=100
+                （static int i=10;其实也就是一个静态代码块）
+                但是在static{int j=10;} j又不算是一个静态变量。
+super
+    调用父类的构造方法：super()
+        必须在子类constructor的第一行。没有显式的话就默认调用父类的无参。
+    调用父类被重写的方法：super.f()
+        其实就是调用父类的方法，只不过非重写的方法不需要这样调用而已。
+    调用父类的变量：super.variable
+        （变量也是可以覆盖的）
+    注意！只能调到父亲的！爷爷的就调不到了！！
+this
+    某个构造函数调用本类的其他构造函数：this()
+        也必须放在第一行
+strictfp
+    strict float point 精确浮点计算。
+        如果没有用这个限制的话，对浮点数的运算是与硬件相关的，性能优先。用了这个之后，就会严格遵守浮点规范IEEE-754，硬件无关。
+        可以修饰类、接口、类方法。
+        不可以修饰构造方法、接口中的方法。
+transient
+    修饰变量，修饰后，类在被序列化的时候这个变量状态不会被序列化。
+    就是说，writeObjectStream后，那些transient的不会被保存，read后是null。
+    （btw，readObjectStream并不调用类的构造函数，而是直接回复类变量的状态）
+native
+    修饰方法，该方法是由其他语言实现的本地方法（C/C++，汇编等）。
+    一般用于JNI（Java Native Interface，提供与已编译的本地代码交互的API）
+volatile
+    用volatile修饰的变量，线程在每次使用变量的时候，都会读取变量修改后的最的值。
+    volatile很容易被误用，用来进行原子性操作。
+    事实上，volatile只是保证线程操作变量的时候会重新从主内存读取变量，但是多个线程之间还是会有并发访问的情况，根本没有原子性。
+instanceof
+    注意！！o是小写的的的
+    是一个二元操作符，返回boolean
+    可以用来判断传进来的是什么类型的对象：
+        if(s instanceOf String)...
+const 和 goto 是保留字，没有被实现。
+
+有f(byte),f(char),f(short),f(int),f(long),f(float),f(double)
+    则f(1)的调用顺序是f(int),f(long),f(float),f(double)，其他的不可能会调用到，因为是不能隐式转换得到的。
+
+一个java文件中只能有一个与文件同名的public类，其他的类不能声明为public，否则报错。
+    而且main必须在第一个类里面。
+        //A.java
+        class A{}   //默认public
+        class B{}   //不能public
+
+方法可以与构造函数同名。
+    public A(){}
+    public void A(){}

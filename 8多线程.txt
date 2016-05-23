@@ -1,0 +1,174 @@
+1.实现Runnable接口开发任务类
+    比较简单的可以用匿名类
+        Runnable task = new Runnable(){
+            @Override
+            public void run(){}
+        };
+    那些自己在循环的动画，如果本身比较简单，主线程也没那么忙，可以用Timer在主线程中实现，每次Timer时间到就会触发一个事件，只要在监听器中干活就好了。
+    如果比较复杂，就要开一个线程来实现了。在run里面弄一个while(true)
+    有时候一个线程还不够，比如既有音频又有动画，在播完音频之前后面的都不会做了，不好。就得来一个线程专门播放音频。
+
+2.创建线程并运行
+    Thread thread = new Thread(task);
+    thread.start();
+    （如果直接调用task.run()的话，并没有新的线程被启动，只是在原来的线程上运行run而已）
+    或直接
+        new Thread(task).start();
+    （程序会等所有线程都跑完了才结束）
+
+也可以直接继承Thread类，然后重写run函数。
+
+3.Thread类中的一些方法
+    isAlive()
+    setPriority(int p)  p从1到10
+            线程继承它的创建者的优先级，主线程优先级是Thread.NORM_PRIORITY，即5
+            MAX_PRIORITY 10 优先级最大。MIN_PRIORITY
+            优先级高的先执行，相同优先级的采用Round-Robin Scheduling。
+            为了防止饥饿，应该适当地使用yield()或sleep()
+    join()              等待线程结束
+            thread4.join();意思是在这个地方让thread4插进来一脚，等thread4完成后再继续原来的。
+    sleep(long milis)   睡眠指定的毫秒数，让别的线程运行。
+            必须catch InterruptedException，在sleep过程中被interrupt就会抛出这个异常。少发生。
+    yield()             让线程休眠，让出CPU让别的线程运行，本线程还会自动回来的。
+    interrupt()         中断线程。较少使用
+
+4.GUI事件分发线程
+    GUI事件处理和绘图代码在一个叫Event Dispatch Thread中执行。
+    如果需要在这个线程中运行代码，比如主线程中启动一个GUI太耗时间了:
+        SwingUtilities.invokeLater(new Runnable(){
+            @Override
+            public void run(){
+                JFrame frame = new JFrame("");
+                //...
+            }
+        });
+        invokeLater是立即返回的，不用等run执行完。
+        有一个类似的invokeAndWait()，则是等run执行完再返回。
+
+5.线程池
+    如果要给多个任务创建线程，则创建一个线程池，便于管理。
+    Executor接口用来执行任务。ExecutorServeice用来管理控制任务，是Executor的子接口，所以也可以execute。
+    Executors类的静态方法newFixedThreadPool(int)，和newCachedThreadPool()用来创建实现了ExecutorService的进程池实例。
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        executor.execute(new Runnable(){...});
+        executor.execute(new Runnable(){...});
+        executor.execute(new Runnable(){...});  //这个要等上面的其中一个线程空闲了才会执行。
+        executor.shutdown();                    //shutdown方法关闭线程池，即线程池不会再接收新的任务，但会完成目前池中的任务。
+                //shutDownNow()方法直接终止所有任务并关闭线程池
+                //isShutDown()  执行器是否已关闭
+                //isTerminated()所有任务是否已被终止
+                //可以在shutdown()后判断While(!isTerminated){}，来等待所有线程执行结束。
+                //一定要shutdown！不然就算线程都结束了可是线程池还会在等待，程序不会结束。
+6.线程同步
+    synchronized关键字
+        用于一般的方法，则会对该对象加锁，即每次只有一个线程能用这个方法。
+        用于静态方法，则会对类加锁。执行完那个静态方法后释放。
+        同步语句
+            synchronized(expr){}
+            expr是需要加锁的对象引用。
+            这样允许设置同步方法中的部分代码，而不必是整个方法，大大增加了程序的并发能力。
+      
+7.显式加锁（多用于条件变量，一般的互斥锁用synchronized实现隐式加就行了）
+    Lock接口，ReentrantLock类实现了Lock接口。ReentrantLock(true)表示公平的，会轮流把锁分配给线程。false则随便分配一个
+        priavte static Lock lock = new ReentrantLock();     //一般锁都static，因为是这个类的所有对象共享的
+        public void f()
+        {
+            lock.lock();
+            try{
+            }catch(){
+            }finally{
+                lock.unlock();     //把unlock放在finally里面，保证一定会被释放
+            }
+        }
+
+8.线程间协作（条件变量）
+    用Lock对象的newCondition()创建条件Condition对象
+    （所谓需要同步，就是访问了共享的东西，lock和condition就应该作为共享的东西所在的类里面。）
+        private static Lock lock = new ReentrantLock();
+        private static Condition condition = lock.newCondition();       //注意！条件变量当然也是共享的！
+        private static int i=0;
+        public static void f() implements Runnable          //Java没有全局变量，所以只能用内部类来访问共享变量了。
+        {
+            @Override
+            public void run()
+            {
+                lock.lock();
+                try{
+                    while(i>2)          //一定要是while，因为唤醒之后从await下一句开始执行。while才会循环回去再判断
+                        condition.await();
+                    //。。。
+                    condition.signal(); //或者signalAll()
+                }catch(InterruptedException e){
+                }finally{
+                    lock.unlock();
+                }
+            }
+        }
+    （这只是一个例子，加锁不一定在Runnable里面，也可以创建一个类给共享变量，里面有对其操作的方法，在那里进行加锁）
+
+9.阻塞队列
+    生产者-消费者模型，即生产的任务遇到队列满了则阻塞，消费的任务遇到队列空了则阻塞。
+        可以用条件变量自己实现，但Java中有阻塞队列，本身已经实现了同步。
+    接口BlockingQueue<E>扩展了Queue<接口>，有put(E)和take()方法。该接口的具体实现类：
+        ArrayBlockingQueue<E>，必须设置capacity，可以设置是否公平。
+        LinkedBlockingQueue<E>，可以设置capacity，不设置则容量无限。
+        PriorityBlockingQueue<E>，可以设置capacity
+    在线程中就直接put和take就行了，阻塞啊同步啊都自动完成了。
+
+10.信号量
+    用来限制访问资源的线程数。访问前acquire()获取许可，访问后release()释放许可
+        Semaphore(int numberOfPermits, boolean fair)，fair可以不设置
+    信号量容量为1的时候就相当于互斥锁，跟互斥锁一样，不用signal的。
+
+11.线程的状态：新建、就绪、运行、阻塞、结束
+    start()之后只是就绪了，要等CPU分配时间片才进入运行
+    yeild()是从运行回到就绪，不是到阻塞！
+    join(),sleep(),wait()或者等待IO，会进入阻塞。
+    isAlive()，新建和结束会返回false，其他都是true。即start()开始到运行结束之前都是alive的
+
+12.同步集合
+    Collections类提供了一些静态方法来把集合转换成线程安全的同步集合。
+        Collections.synchronizedCollection(Collection)
+        Collections.synchronizedList(List)  等等。
+        对这些同步集合进行操作的时候就不用考虑同步了，他内部都用synchronized关键字实现了。
+    但是！在用迭代器的时候要小心，
+        迭代器是fail-fast的，即当集合被别的线程占用时，这边使用迭代器会立即抛出一个ConcurrentModificationException，而不是阻塞等待。
+        所以，用迭代器的时候要加锁。
+            Set hashSet = Collections.synchronizedSet(new HashSet());
+            synchronized(hashSet){
+                Iterator iterator = hashSet.iterator();
+                while(iterator.next())
+                    //...
+            }
+
+13.SwingWorker
+    Swing的事件处理和组件绘制是在一个事件分发线程中完成的。由于只是一个线程，所以处理某个复杂的事件的时候，GUI就会被冻住。
+    Swing提供了SwingWorker抽象类，实现了Runnable，扩展该抽象类就可以在新的线程中完成某个事件的处理和组件的更新。
+    费时的任务都应该在这里完成。
+        static class ComputePrime extends SwingWorker<Integer,Object>   //Integer是doInBackground()返回值的类型
+        {                                                               //可以在外面用get()获得doInBackground()的返回值。
+            //覆盖这个方法，来完成要做的事情
+            protected Integer doInBackground(){
+                return ...;
+            }
+            //一般可以覆盖done来刷新组件，当然也可以在外面刷新
+            protected void done()
+            {
+                //这里也可以用get()获得doInBackground()的返回值
+            }
+        }
+        外面就：new ComputePrime(...).execute();
+
+14.用进度条显示进度
+    SwingWorker中有setProgress(int)方法，int值为0-100，每次调用都会触发PropertyChangeEvent
+        ComputePrime task = new ComputePrime(..);
+        task.addPropertyChangeListener(new PropertyChangeListener(){
+            public void propertyChange(PropertyChangeEvent e){
+                if(e.getPropertyName().equals("progress"))
+                    e.getNewValue()就是当前的进度。
+            }
+        });
+    在ComputePrime类中，只要适当的时候（比如找到一个质数），调用setProgress(int)就好了。
+    SwingWorker中还有publish(V data)方法，用来从doInBackground运行过程中传送中间结果，即运行过程中可以刷新组件什么的。
+        （在setProgress的时候顺便publish就好了）
+    重写void progress(List<V>)，用来处理publish传过来的数据。
