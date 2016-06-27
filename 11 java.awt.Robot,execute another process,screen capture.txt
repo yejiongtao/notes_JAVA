@@ -1,0 +1,59 @@
+1. java.awt.Robot
+	introduction
+		instead of posting events to the AWT event queue, it generates events in the platform's native input queue
+		AWTException
+			thrown when the system don't allow jvm to access low-level input control
+		caution
+			if your Robot program is in an infinite loop making events
+				then the only way to regain control of your system is to reboot the computer
+	to use
+		methods
+			mouseMove(destX, destY)		the top-left corner is (0,0)
+			mousePress(int)			InputEvent.BUTTON1_MASK, 
+							InputEvent.BUTTON2_MASK, 
+							InputEvent.BUTTON3_MASK
+			mouseRelease(int)		!!! remember to release it! or your mouse will not work normally any more
+			mouseScroll(..)			scroll the wheel
+			keyPress(int)			KeyEvent.VK_H, KeyEvent.VK_E
+							KeyEvent.VK_SHIFT
+			keyRelease			Releases specified key on the keyboard.
+			delay(int miliseconds)		causes the thread to sleep for a while, when you can regain control
+
+	if you are using Robot to test your own java GUI
+		you can call getLocationOnScreen() on a component to get its location
+
+2. execute another process
+	Runtime.getRuntime.exec("notepad");
+		// Runtime.getRuntime() returns the unique Runtime object referring to the environment in which this java program is running
+		// it's the same as typing "notepad" in the Run program
+	if you want to run your own program
+		reigister it first
+		or use full path: .exec("C:\\Users\\jioye\\Desktop\\softwares\\putty.exe");
+	if you want to run a java program
+		congradulations! you are fucked up
+		I haven't been able to find out how
+
+3. use Robot to capture screen
+	(you can use this to develop a screen video capture software)
+	BufferedImage Robot.createScreenCapture(Rectangle screenRect)
+		a BufferedImage object which can be drawn onto a GUI component or saved to a file
+		use the ImageIO.write() static method to save the BufferedImage object to a file:
+			boolean write(RenderedImage im, String formatName, File output)
+			// a BufferedImage can be passed directly as the first parameter
+			// formatName is "jpg", "png", "bmp", etc
+			// the file's name should also included the extension
+
+	capturing full screen 
+		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());	// getScreenSize() returns a Dimension
+	a portion of screen
+		new Rectangle(left, top, right, bottom)
+
+4. another way to capture a java GUI component
+	Rectangle rect = component.getBounds();
+
+	String format = "png";
+	String fileName = component.getName() + "." + format;
+	BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+	component.paint(captureImage.getGraphics());
+
+	ImageIO.write(captureImage, format, new File(fileName));
