@@ -57,3 +57,9 @@
 	component.paint(captureImage.getGraphics());
 
 	ImageIO.write(captureImage, format, new File(fileName));
+
+5. about Interface
+	an Interface can extend another Interface, but cannot extend a class
+	inside an Interface, those methods in Object will be implicitly created,
+		such as equals(), hashCode(), etc
+		so that an instance of an interface can be treated like a descendant of Object
